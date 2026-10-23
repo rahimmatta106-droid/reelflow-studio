@@ -1,0 +1,8 @@
+{
+  "name": "AutoReels: AI Video & WhatsApp Multi-Page Publisher",
+  "description": "Production-oriented AI video automation engine with Google Veo generation, WhatsApp Cloud API interactive approval workflows, and automated scheduled publishing to up to 100 Facebook Pages.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

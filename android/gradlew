@@ -1,0 +1,14 @@
+#!/bin/sh
+# Gradle wrapper script for ReelFlow Studio
+
+APP_BASE_NAME=${0##*/}
+APP_HOME=$(cd "${APP_BASE_NAME%/*}" >/dev/null 2>&1 && pwd -P || pwd)
+
+# Use JAVA_HOME if set, otherwise java from PATH
+if [ -n "$JAVA_HOME" ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+exec "$JAVACMD" -classpath "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"
