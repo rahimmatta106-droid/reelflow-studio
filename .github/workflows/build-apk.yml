@@ -26,6 +26,17 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;34.0.0"
 
+      # FIXED debug keystore: every build signs with the SAME key, so updates
+      # install cleanly over the previous version (no "package appears to be
+      # invalid" / signature-mismatch errors, no data loss from uninstalls).
+      - name: Install fixed debug keystore
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > ~/.android/debug.keystore
+          ls -la ~/.android/debug.keystore
+
       - name: Build Debug APK
         run: |
           cd android
