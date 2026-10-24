@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.reelflow.studio.data.interfaces.MetaGraphPublishingService
 import com.reelflow.studio.data.model.*
+import com.reelflow.studio.data.service.AccountStore
+import com.reelflow.studio.data.service.ConnectedAccount
 import com.reelflow.studio.data.service.FbLoginResult
 import com.reelflow.studio.data.service.RealMetaPublishingService
 import com.reelflow.studio.data.service.SecureTokenStore
@@ -178,6 +180,7 @@ class ReelFlowViewModel(
     fun attachAppContext(ctx: Context) {
         appContext = ctx.applicationContext
         _veoApiKey.value = SecureTokenStore(ctx).getApiKey(SecureTokenStore.VEO_API_KEY)
+        refreshAccounts()
     }
 
     private val _veoApiKey = MutableStateFlow<String?>(null)
@@ -251,19 +254,60 @@ class ReelFlowViewModel(
     private val _fbLoginMessage = MutableStateFlow<String?>(null)
     val fbLoginMessage: StateFlow<String?> = _fbLoginMessage.asStateFlow()
 
+    // Connected Facebook accounts (up to 50). Tokens persist per page, so
+    // adding accounts one by one accumulates ALL their pages.
+    private val _connectedAccounts = MutableStateFlow<List<ConnectedAccount>>(emptyList())
+    val connectedAccounts: StateFlow<List<ConnectedAccount>> = _connectedAccounts.asStateFlow()
+
+    private fun refreshAccounts() {
+        val ctx = appContext ?: return
+        _connectedAccounts.value = AccountStore(ctx).getAccounts()
+    }
+
     /** Called by the Settings "Login with Facebook" button. MainActivity runs the login. */
     fun requestFacebookLogin() {
+        if ((_connectedAccounts.value.size) >= AccountStore.MAX_ACCOUNTS) {
+            _fbLoginMessage.value = "50 accounts already connected (max)."
+            return
+        }
         _fbLoginMessage.value = "Connecting to Facebook…"
         _fbLoginRequest.tryEmit(Unit)
+    }
+
+    /** Remove an account AND its pages' tokens. */
+    fun removeFacebookAccount(accountId: String) {
+        val ctx = appContext ?: return
+        val pageIds = AccountStore(ctx).removeAccount(accountId)
+        val store = SecureTokenStore(ctx)
+        for (pageId in pageIds) store.removePageToken(pageId)
+        refreshAccounts()
+        repository.addLog("FB_LOGOUT", "Removed account $accountId + ${pageIds.size} page tokens")
     }
 
     /** Called by MainActivity with the login outcome. */
     fun onFacebookLoginResult(result: FbLoginResult) {
         when (result) {
             is FbLoginResult.Success -> {
+                val ctx = appContext
+                if (ctx != null && result.accountId.isNotBlank()) {
+                    val added = AccountStore(ctx).addAccount(
+                        ConnectedAccount(
+                            id = result.accountId,
+                            name = result.accountName.ifBlank { "Facebook Account" },
+                            pageIds = result.pageIds
+                        )
+                    )
+                    if (!added) {
+                        _fbLoginMessage.value = "50 accounts already connected (max)."
+                        refreshAccounts()
+                        return
+                    }
+                }
+                refreshAccounts()
                 _fbLoginMessage.value =
                     if (result.pageCount > 0) {
-                        "Connected ${result.pageCount} pages! Real mode ON."
+                        "Connected ${result.pageCount} pages! Real mode ON. " +
+                            "(${_connectedAccounts.value.size}/50 accounts)"
                     } else {
                         "Login OK, but no pages found on this account."
                     }

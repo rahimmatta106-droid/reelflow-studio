@@ -23,7 +23,13 @@ import com.facebook.login.LoginResult
  * instead of crashing.
  */
 sealed class FbLoginResult {
-    data class Success(val pageCount: Int, val pageNames: List<String>) : FbLoginResult()
+    data class Success(
+        val pageCount: Int,
+        val pageNames: List<String>,
+        val accountId: String = "",
+        val accountName: String = "",
+        val pageIds: List<String> = emptyList()
+    ) : FbLoginResult()
     data class Cancelled(val reason: String = "Login cancelled") : FbLoginResult()
     data class Error(val message: String) : FbLoginResult()
 }
@@ -57,10 +63,13 @@ class FacebookLoginHelper(
             )
             return
         }
+        // Fresh login every time: clears the previous session so a DIFFERENT
+        // account can be added. Saved page tokens are NOT affected.
+        LoginManager.getInstance().logOut()
         LoginManager.getInstance().registerCallback(
             callbackManager,
             object : FacebookCallback<LoginResult> {
-                override fun onSuccess(result: LoginResult) = fetchPages()
+                override fun onSuccess(result: LoginResult) = fetchAccountAndPages()
                 override fun onCancel() = onResult(FbLoginResult.Cancelled())
                 override fun onError(error: FacebookException) {
                     onResult(FbLoginResult.Error(error.message ?: "Facebook login failed"))
@@ -74,7 +83,24 @@ class FacebookLoginHelper(
         LoginManager.getInstance().logOut()
     }
 
-    private fun fetchPages() {
+    private fun fetchAccountAndPages() {
+        val token = AccessToken.getCurrentAccessToken()
+        if (token == null) {
+            onResult(FbLoginResult.Error("No Facebook access token after login"))
+            return
+        }
+        // First: who logged in? Then: which pages do they manage?
+        val meRequest = GraphRequest.newGraphPathRequest(token, "me") { meResponse ->
+            val meJson = meResponse.jsonObject
+            val accountId = meJson?.optString("id") ?: ""
+            val accountName = meJson?.optString("name") ?: ""
+            fetchPages(accountId, accountName)
+        }
+        meRequest.parameters = Bundle().apply { putString("fields", "id,name") }
+        meRequest.executeAsync()
+    }
+
+    private fun fetchPages(accountId: String, accountName: String) {
         val token = AccessToken.getCurrentAccessToken()
         if (token == null) {
             onResult(FbLoginResult.Error("No Facebook access token after login"))
@@ -85,6 +111,7 @@ class FacebookLoginHelper(
                 val data = response.jsonObject?.optJSONArray("data")
                 var count = 0
                 val names = mutableListOf<String>()
+                val ids = mutableListOf<String>()
                 if (data != null) {
                     for (i in 0 until data.length()) {
                         val page = data.getJSONObject(i)
@@ -94,11 +121,20 @@ class FacebookLoginHelper(
                         if (id.isNotBlank() && pageToken.isNotBlank()) {
                             tokenStore.savePageToken(id, pageToken)
                             count++
+                            ids.add(id)
                             if (name.isNotBlank()) names.add(name)
                         }
                     }
                 }
-                onResult(FbLoginResult.Success(count, names))
+                onResult(
+                    FbLoginResult.Success(
+                        pageCount = count,
+                        pageNames = names,
+                        accountId = accountId,
+                        accountName = accountName,
+                        pageIds = ids
+                    )
+                )
             } catch (e: Exception) {
                 onResult(FbLoginResult.Error(e.message ?: "Failed to read your pages"))
             }
