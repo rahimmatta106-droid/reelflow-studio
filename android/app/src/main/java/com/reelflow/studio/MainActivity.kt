@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
                 val viewModel: ReelFlowViewModel = viewModel()
                 LaunchedEffect(Unit) {
                     viewModel.attachRealPublishing(realPublisher)
+                    viewModel.attachAppContext(applicationContext)
                 }
                 // Facebook Login requests from Settings: run the login flow here.
                 LaunchedEffect(Unit) {

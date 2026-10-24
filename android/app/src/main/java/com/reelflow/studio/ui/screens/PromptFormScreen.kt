@@ -155,7 +155,7 @@ fun PromptFormScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Submit Button
+            // Submit Button (mock preview flow)
             Button(
                 onClick = {
                     isSubmitting = true
@@ -174,6 +174,36 @@ fun PromptFormScreen(
                 Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Synthesize & Advance to Preview", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+
+            // REAL Veo 3 generation (needs Gemini API key in Settings)
+            run {
+                val veoKey by viewModel.veoApiKey.collectAsState()
+                val veoStatus by viewModel.veoStatus.collectAsState()
+                Button(
+                    onClick = {
+                        viewModel.generateVeoVideo(
+                            prompt = prompt,
+                            negativePrompt = negativePrompt,
+                            targetPageId = selectedPageId
+                        )
+                    },
+                    enabled = veoKey != null,
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F9D58)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Movie, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        if (veoKey != null) "Generate REAL Video with Veo 3 (8s)"
+                        else "Generate with Veo 3 (needs API key in Settings)",
+                        fontSize = 13.sp, fontWeight = FontWeight.Bold
+                    )
+                }
+                if (veoStatus != null) {
+                    Text(veoStatus!!, fontSize = 11.sp)
+                }
             }
         }
     }

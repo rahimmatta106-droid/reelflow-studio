@@ -31,9 +31,11 @@
    - Upload this project's files (extract ZIP, upload via web)
    - Actions tab → "Build APK" runs automatically → download `ReelFlow-Studio-APK`
    - Install the APK on the phone (allow "install unknown apps")
-2. In the app: Settings → switch to **Real (Meta API)**.
-3. Page Manager → key icon on each page → paste its **Page access token** → Save & Verify.
-4. Create/pick a video (gallery import works today) → Publish → goes LIVE on Facebook.
+2. **v1.2 adds Facebook Login (one-tap page connect):**
+   - Settings → "Login with Facebook" → grant page permissions → ALL pages connect automatically, Real mode switches ON by itself.
+   - REQUIRES: a real Meta App ID in res/values/strings.xml (facebook_app_id) + the app's key hash registered in the Meta app dashboard. Until then the button shows "Meta App ID not set yet".
+   - Fallback (still works): Settings → switch to **Real (Meta API)**; Page Manager → key icon on each page → paste its **Page access token** → Save & Verify.
+3. Create/pick a video (gallery import works today) → Publish → goes LIVE on Facebook.
 
 ## Getting a Page access token (his action, in browser)
 - developers.facebook.com → create app → add "Pages" product → get Page access token

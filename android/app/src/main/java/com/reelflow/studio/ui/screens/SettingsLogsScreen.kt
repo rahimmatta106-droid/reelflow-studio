@@ -113,6 +113,54 @@ fun SettingsLogsScreen(
                 }
             }
 
+            // Veo 3 API Key Card — real AI video generation
+            run {
+                val veoKey by viewModel.veoApiKey.collectAsState()
+                val veoStatus by viewModel.veoStatus.collectAsState()
+                var keyInput by remember { mutableStateOf("") }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Slate900),
+                    border = BorderStroke(1.dp, Slate800),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Movie, contentDescription = null, tint = AccentSky)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Google Veo 3 — AI Video", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        }
+                        Text(
+                            if (veoKey != null)
+                                "API key saved (encrypted). Create screen can now generate REAL 8s Veo 3 videos."
+                            else
+                                "Paste your Google Gemini API key (aistudio.google.com). " +
+                                    "Cost ≈ \$0.75/sec quality / \$0.40/sec fast — one 8s clip ≈ \$6.00 / \$3.20, billed by Google.",
+                            color = Slate400,
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp
+                        )
+                        OutlinedTextField(
+                            value = keyInput,
+                            onValueChange = { keyInput = it },
+                            label = { Text("Gemini API key", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Button(
+                            onClick = { viewModel.saveVeoApiKey(keyInput); keyInput = "" },
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Slate800),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(if (veoKey != null) "Update Key" else "Save Key", color = Color.White, fontSize = 12.sp)
+                        }
+                        if (veoStatus != null) {
+                            Text(veoStatus!!, color = AccentSky, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+
             // Facebook Login Card — one-tap real page connect
             run {
                 val fbMessage by viewModel.fbLoginMessage.collectAsState()

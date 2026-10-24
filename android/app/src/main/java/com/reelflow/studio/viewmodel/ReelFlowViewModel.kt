@@ -2,13 +2,17 @@ package com.reelflow.studio.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
 import com.reelflow.studio.data.interfaces.MetaGraphPublishingService
 import com.reelflow.studio.data.model.*
 import com.reelflow.studio.data.service.FbLoginResult
 import com.reelflow.studio.data.service.RealMetaPublishingService
+import com.reelflow.studio.data.service.SecureTokenStore
+import com.reelflow.studio.data.service.Veo3GenerationService
 import com.reelflow.studio.data.repository.PublishingMode
 import com.reelflow.studio.data.repository.ReelFlowRepository
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class ReelFlowViewModel(
     private val repository: ReelFlowRepository = ReelFlowRepository()
@@ -166,6 +170,78 @@ class ReelFlowViewModel(
 
     fun mockPublishNow(jobId: String) {
         repository.publishReelMock(jobId)
+    }
+
+    // ---------------- Veo 3 AI video generation ----------------
+    private var appContext: Context? = null
+
+    fun attachAppContext(ctx: Context) {
+        appContext = ctx.applicationContext
+        _veoApiKey.value = SecureTokenStore(ctx).getApiKey(SecureTokenStore.VEO_API_KEY)
+    }
+
+    private val _veoApiKey = MutableStateFlow<String?>(null)
+    val veoApiKey: StateFlow<String?> = _veoApiKey.asStateFlow()
+
+    private val _veoStatus = MutableStateFlow<String?>(null)
+    val veoStatus: StateFlow<String?> = _veoStatus.asStateFlow()
+
+    fun saveVeoApiKey(key: String) {
+        val ctx = appContext ?: return
+        SecureTokenStore(ctx).saveApiKey(SecureTokenStore.VEO_API_KEY, key)
+        _veoApiKey.value = key.takeIf { it.isNotBlank() }
+        _veoStatus.value = if (key.isBlank()) "Veo API key removed." else "Veo API key saved (encrypted)."
+    }
+
+    /** Generate a REAL 8s Veo 3 video, then update the job when it is ready. */
+    fun generateVeoVideo(prompt: String, negativePrompt: String, targetPageId: String) {
+        val ctx = appContext
+        val key = ctx?.let { SecureTokenStore(it).getApiKey(SecureTokenStore.VEO_API_KEY) }
+        if (ctx == null || key.isNullOrBlank()) {
+            _veoStatus.value = "Add your Google Gemini API key in Settings first."
+            return
+        }
+        val targetPage = pages.value.find { it.id == targetPageId } ?: pages.value.first()
+        val job = VideoReelItem(
+            targetPageId = targetPage.id,
+            targetPageName = targetPage.name,
+            prompt = prompt,
+            negativePrompt = negativePrompt,
+            durationSeconds = 8,
+            status = JobStatus.AI_GENERATING,
+            title = "Veo 3: ${prompt.take(50)}",
+            caption = "AI-generated with Google Veo 3.",
+            hashtags = targetPage.defaultHashtags.ifEmpty { listOf("#AIVideo", "#Reels", "#Veo3") }
+        )
+        repository.addJob(job)
+        _selectedJob.value = job
+        _veoStatus.value = "Veo 3 generating… (takes 1–3 min)"
+        viewModelScope.launch {
+            val service = Veo3GenerationService(ctx, key)
+            val result = service.generateVideo(prompt, negativePrompt, 8, "9:16", "1080p")
+            val current = jobs.value.find { it.id == job.id } ?: job
+            if (result.isSuccess) {
+                val localPath = result.getOrNull()!!
+                repository.updateJob(
+                    current.copy(
+                        localUri = localPath,
+                        videoUrl = localPath,
+                        status = JobStatus.READY_FOR_REVIEW
+                    )
+                )
+                _selectedJob.value = current.copy(
+                    localUri = localPath,
+                    videoUrl = localPath,
+                    status = JobStatus.READY_FOR_REVIEW
+                )
+                _veoStatus.value = "Veo 3 video ready! Check Preview."
+                repository.addLog("VEO3", "Video ready for job ${job.id}")
+            } else {
+                repository.updateJob(current.copy(status = JobStatus.FAILED))
+                _veoStatus.value = "Veo failed: ${result.exceptionOrNull()?.message}"
+                repository.addLog("VEO3_ERROR", result.exceptionOrNull()?.message ?: "unknown")
+            }
+        }
     }
 
     // ---------------- Facebook Login (one-tap page connect) ----------------

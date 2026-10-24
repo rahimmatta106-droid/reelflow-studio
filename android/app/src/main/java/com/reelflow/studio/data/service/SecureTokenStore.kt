@@ -57,7 +57,20 @@ class SecureTokenStore(context: Context) {
 
     private fun keyFor(graphPageId: String) = "$PREFIX$graphPageId"
 
+    /** Generic encrypted key storage (e.g. Veo API key). */
+    fun saveApiKey(name: String, value: String) {
+        prefs.edit().putString("api_key_$name", value.trim()).apply()
+    }
+
+    fun getApiKey(name: String): String? =
+        prefs.getString("api_key_$name", null)?.takeIf { it.isNotBlank() }
+
+    fun removeApiKey(name: String) {
+        prefs.edit().remove("api_key_$name").apply()
+    }
+
     companion object {
         private const val PREFIX = "page_token_"
+        const val VEO_API_KEY = "veo"
     }
 }
