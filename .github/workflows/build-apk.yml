@@ -58,9 +58,28 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleRelease --no-daemon
 
+      # AAB is REQUIRED for Google Play Store uploads (APK alone is rejected
+      # for new apps). Same signing, same code.
+      - name: Build Release AAB (for Play Store)
+        env:
+          RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/android/release.keystore
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew :app:bundleRelease --no-daemon
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ReelFlow-Studio-APK
           path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReelFlow-Studio-AAB
+          path: android/app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
