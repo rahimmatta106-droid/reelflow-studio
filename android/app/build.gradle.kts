@@ -19,9 +19,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            // Release signing comes from CI secrets (fixed key, stable across
+            // builds, so updates install cleanly). Local builds without these
+            // env vars simply skip signing.
+            storeFile = file(System.getenv("RELEASE_KEYSTORE_PATH") ?: "release.keystore")
+            storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
+            if (System.getenv("RELEASE_KEYSTORE_PATH") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
