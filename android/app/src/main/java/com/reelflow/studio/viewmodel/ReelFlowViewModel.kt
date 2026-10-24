@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reelflow.studio.data.interfaces.MetaGraphPublishingService
 import com.reelflow.studio.data.model.*
+import com.reelflow.studio.data.service.FbLoginResult
 import com.reelflow.studio.data.service.RealMetaPublishingService
 import com.reelflow.studio.data.repository.PublishingMode
 import com.reelflow.studio.data.repository.ReelFlowRepository
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 class ReelFlowViewModel(
     private val repository: ReelFlowRepository = ReelFlowRepository()
@@ -166,5 +166,43 @@ class ReelFlowViewModel(
 
     fun mockPublishNow(jobId: String) {
         repository.publishReelMock(jobId)
+    }
+
+    // ---------------- Facebook Login (one-tap page connect) ----------------
+    private val _fbLoginRequest = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val fbLoginRequest: SharedFlow<Unit> = _fbLoginRequest.asSharedFlow()
+
+    private val _fbLoginMessage = MutableStateFlow<String?>(null)
+    val fbLoginMessage: StateFlow<String?> = _fbLoginMessage.asStateFlow()
+
+    /** Called by the Settings "Login with Facebook" button. MainActivity runs the login. */
+    fun requestFacebookLogin() {
+        _fbLoginMessage.value = "Connecting to Facebook…"
+        _fbLoginRequest.tryEmit(Unit)
+    }
+
+    /** Called by MainActivity with the login outcome. */
+    fun onFacebookLoginResult(result: FbLoginResult) {
+        when (result) {
+            is FbLoginResult.Success -> {
+                _fbLoginMessage.value =
+                    if (result.pageCount > 0) {
+                        "Connected ${result.pageCount} pages! Real mode ON."
+                    } else {
+                        "Login OK, but no pages found on this account."
+                    }
+                repository.addLog(
+                    "FB_LOGIN",
+                    "Facebook Login connected ${result.pageCount} pages"
+                )
+                if (result.pageCount > 0) {
+                    repository.setPublishingMode(PublishingMode.REAL)
+                }
+            }
+            is FbLoginResult.Cancelled ->
+                _fbLoginMessage.value = "Facebook login cancelled."
+            is FbLoginResult.Error ->
+                _fbLoginMessage.value = "Login failed: ${result.message}"
+        }
     }
 }

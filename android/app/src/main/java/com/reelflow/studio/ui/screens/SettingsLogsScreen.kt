@@ -113,6 +113,43 @@ fun SettingsLogsScreen(
                 }
             }
 
+            // Facebook Login Card — one-tap real page connect
+            run {
+                val fbMessage by viewModel.fbLoginMessage.collectAsState()
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Slate900),
+                    border = BorderStroke(1.dp, Slate800),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Facebook, contentDescription = null, tint = AccentSky)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Connect Facebook Pages", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        }
+                        Text(
+                            "Tap below, log in with Facebook and grant page permissions. " +
+                                "All your pages connect automatically — no manual tokens. " +
+                                "Real mode switches ON by itself.",
+                            color = Slate400,
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp
+                        )
+                        Button(
+                            onClick = { viewModel.requestFacebookLogin() },
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Login with Facebook", color = Color.White, fontSize = 13.sp)
+                        }
+                        if (fbMessage != null) {
+                            Text(fbMessage!!, color = AccentSky, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+
             // Mock Architecture Disclosure Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = Slate900),

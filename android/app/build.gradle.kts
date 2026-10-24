@@ -80,6 +80,9 @@ dependencies {
     // Encrypted storage for Facebook Page access tokens (AES256-GCM)
     implementation("androidx.security:security-crypto:1.1.0")
 
+    // Facebook Login — one-tap page connect (no manual token copy-paste)
+    implementation("com.facebook.android:facebook-login:17.0.0")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

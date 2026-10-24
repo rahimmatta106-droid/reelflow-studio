@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ReelFlow Studio</string>
+    <!-- Meta App ID for Facebook Login.
+         REPLACE "000000000000000" with the real App ID from developers.facebook.com
+         after developer verification + app creation. Until then, the in-app
+         "Login with Facebook" button shows a clear "not set yet" message. -->
+    <string name="facebook_app_id">000000000000000</string>
+    <!-- Client token is optional for login; leave empty unless Meta requires it. -->
+    <string name="facebook_client_token"></string>
+</resources>
