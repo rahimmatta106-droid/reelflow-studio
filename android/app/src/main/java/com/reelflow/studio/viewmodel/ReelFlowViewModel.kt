@@ -8,6 +8,7 @@ import com.reelflow.studio.data.model.*
 import com.reelflow.studio.data.service.AccountStore
 import com.reelflow.studio.data.service.ConnectedAccount
 import com.reelflow.studio.data.service.FbLoginResult
+import com.reelflow.studio.data.service.PagePromptStore
 import com.reelflow.studio.data.service.RealMetaPublishingService
 import com.reelflow.studio.data.service.SecureTokenStore
 import com.reelflow.studio.data.service.Veo3GenerationService
@@ -181,6 +182,29 @@ class ReelFlowViewModel(
         appContext = ctx.applicationContext
         _veoApiKey.value = SecureTokenStore(ctx).getApiKey(SecureTokenStore.VEO_API_KEY)
         refreshAccounts()
+        refreshMasterPrompts()
+    }
+
+    // ---------------- Per-page master prompts (100% verbatim) ----------------
+    private val _pageMasterPrompts = MutableStateFlow<Map<String, String>>(emptyMap())
+    val pageMasterPrompts: StateFlow<Map<String, String>> = _pageMasterPrompts.asStateFlow()
+
+    private fun refreshMasterPrompts() {
+        val ctx = appContext ?: return
+        _pageMasterPrompts.value = PagePromptStore(ctx).getAllPrompts()
+    }
+
+    fun getPageMasterPrompt(pageId: String): String? =
+        _pageMasterPrompts.value[pageId]
+
+    fun hasPageMasterPrompt(pageId: String): Boolean =
+        _pageMasterPrompts.value.containsKey(pageId)
+
+    fun savePageMasterPrompt(pageId: String, prompt: String) {
+        val ctx = appContext ?: return
+        PagePromptStore(ctx).saveMasterPrompt(pageId, prompt)
+        refreshMasterPrompts()
+        repository.addLog("MASTER_PROMPT", "Saved master prompt for page $pageId")
     }
 
     private val _veoApiKey = MutableStateFlow<String?>(null)

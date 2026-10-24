@@ -89,6 +89,33 @@ fun PromptFormScreen(
                 }
             }
 
+            // Page master prompt (100% verbatim) — fills the prompt field as-is
+            run {
+                val masterPrompts by viewModel.pageMasterPrompts.collectAsState()
+                val saved = masterPrompts[selectedPageId]
+                if (saved != null) {
+                    Button(
+                        onClick = { prompt = saved },
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Slate800),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Use Saved Master Prompt (100% same)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        "This page has a saved master prompt. Tap above to load it exactly as saved — nothing is changed.",
+                        fontSize = 11.sp, color = Slate400
+                    )
+                } else {
+                    Text(
+                        "No master prompt saved for this page. Save one from Pages tab (📄 icon) to reuse it 100% verbatim.",
+                        fontSize = 11.sp, color = Slate400
+                    )
+                }
+            }
+
             // Prompt Input
             Text("SCENE PROMPT (9:16 VERTICAL REEL)", fontWeight = FontWeight.SemiBold, fontSize = 11.sp, color = Slate400)
             OutlinedTextField(

@@ -34,6 +34,10 @@ fun PageManagerScreen(
     var tokenDialogPage by remember { mutableStateOf<FacebookPage?>(null) }
     var tokenInput by remember { mutableStateOf("") }
     var tokenError by remember { mutableStateOf<String?>(null) }
+    // Master prompt dialog state (per-page, 100% verbatim generation)
+    var promptDialogPage by remember { mutableStateOf<FacebookPage?>(null) }
+    var promptInput by remember { mutableStateOf("") }
+    val masterPrompts by viewModel.pageMasterPrompts.collectAsState()
 
     val niches = listOf("All", "Tech & AI", "Fitness & Wellness", "Travel & Adventure", "Cuisine & Cooking", "Finance & Crypto", "Gaming")
 
@@ -189,6 +193,17 @@ fun PageManagerScreen(
                                     )
                                 }
                             }
+                            // Master prompt button (per-page, 100% verbatim)
+                            IconButton(onClick = {
+                                promptDialogPage = page
+                                promptInput = masterPrompts[page.id] ?: ""
+                            }) {
+                                Icon(
+                                    Icons.Default.Description,
+                                    contentDescription = "Set page master prompt",
+                                    tint = if (masterPrompts.containsKey(page.id)) EmeraldGreen else Slate400
+                                )
+                            }
                             // Token key button (real Meta API)
                             IconButton(onClick = {
                                 tokenDialogPage = page
@@ -211,6 +226,53 @@ fun PageManagerScreen(
                 }
             }
         }
+    }
+
+    // Master prompt dialog (per-page, used 100% verbatim for generation)
+    promptDialogPage?.let { page ->
+        AlertDialog(
+            onDismissRequest = { promptDialogPage = null },
+            title = { Text("Master Prompt — ${page.name}", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "This prompt is used 100% as-is for this page's videos. Nothing is rewritten or \"improved\". Leave empty to clear.",
+                        color = Slate400,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = promptInput,
+                        onValueChange = { promptInput = it },
+                        placeholder = { Text("Paste the page master prompt…", fontSize = 12.sp) },
+                        minLines = 5,
+                        maxLines = 12,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Slate900,
+                            unfocusedContainerColor = Slate900,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = Slate800
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.savePageMasterPrompt(page.id, promptInput.trim())
+                    promptDialogPage = null
+                }) { Text("Save Prompt", color = EmeraldGreen, fontSize = 13.sp) }
+            },
+            dismissButton = {
+                TextButton(onClick = { promptDialogPage = null }) {
+                    Text("Cancel", color = Slate400, fontSize = 13.sp)
+                }
+            },
+            containerColor = Slate900,
+            shape = RoundedCornerShape(14.dp)
+        )
     }
 
     // Page access token dialog (stored encrypted on-device, never logged)

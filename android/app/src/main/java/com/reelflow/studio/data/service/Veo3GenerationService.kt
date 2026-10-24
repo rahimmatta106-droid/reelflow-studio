@@ -60,13 +60,11 @@ class Veo3GenerationService(
                     Exception("Veo API key not set. Add it in Settings first.")
                 )
             }
+            // 100% VERBATIM: the prompt is sent exactly as given — nothing is
+            // appended, rewritten or "improved". (negativePrompt is stored on
+            // the job record only, never mixed into the master prompt.)
             // Veo 3 always generates 8s clips; duration is informational here.
-            val fullPrompt = if (negativePrompt.isNotBlank()) {
-                "$prompt. Avoid: $negativePrompt"
-            } else {
-                prompt
-            }
-            val operationName = submit(fullPrompt, aspectRatio)
+            val operationName = submit(prompt, aspectRatio)
                 ?: return@withContext Result.failure(
                     Exception("Veo did not return an operation")
                 )
