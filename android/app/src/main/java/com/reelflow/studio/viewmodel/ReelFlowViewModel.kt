@@ -48,6 +48,10 @@ class ReelFlowViewModel(
         repository.setPublishingMode(mode)
     }
 
+    fun addLog(tag: String, message: String, level: String = "INFO") {
+        repository.addLog(tag, message, level)
+    }
+
     /** Publish using the active mode (REAL = live Meta Graph API, MOCK = simulated). */
     fun publishNow(jobId: String) {
         repository.publishReel(jobId)
