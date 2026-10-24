@@ -39,7 +39,7 @@ fun DashboardScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("ReelFlow Studio", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("Rahim Facebook Automation Agent", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Text("500 Facebook Pages Automation", fontSize = 11.sp, color = Slate400)
                     }
                 },

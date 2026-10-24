@@ -226,7 +226,7 @@ fun SettingsLogsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Code, contentDescription = null, tint = AccentSky)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("ReelFlow Studio v1 Architecture", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        Text("Rahim Facebook Automation Agent", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
                     }
                     Text(
                         "• Sample Data: 500 realistic Facebook Pages across 10 niches\n" +

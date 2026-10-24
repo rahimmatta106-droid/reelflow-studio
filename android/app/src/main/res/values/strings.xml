@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ReelFlow Studio</string>
+    <string name="app_name">Rahim Facebook Automation Agent</string>
     <!-- Meta App ID for Facebook Login.
          REPLACE "000000000000000" with the real App ID from developers.facebook.com
          after developer verification + app creation. Until then, the in-app
