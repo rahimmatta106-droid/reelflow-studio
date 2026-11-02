@@ -66,24 +66,35 @@ class FacebookLoginHelper(
         }
         // Fresh login every time: clears the previous session so a DIFFERENT
         // account can be added. Saved page tokens are NOT affected.
-        LoginManager.getInstance().logOut()
-        LoginManager.getInstance().registerCallback(
-            callbackManager,
-            object : FacebookCallback<LoginResult> {
-                override fun onSuccess(result: LoginResult) = fetchAccountAndPages()
-                override fun onCancel() = onResult(FbLoginResult.Cancelled())
-                override fun onError(error: FacebookException) {
-                    onResult(FbLoginResult.Error(error.message ?: "Facebook login failed"))
+        // Wrapped: any launch failure (SDK init, Custom Tab, etc.) used to
+        // kill the app silently with no message shown. Now the reason is
+        // reported on screen instead of a silent exit.
+        try {
+            LoginManager.getInstance().logOut()
+            LoginManager.getInstance().registerCallback(
+                callbackManager,
+                object : FacebookCallback<LoginResult> {
+                    override fun onSuccess(result: LoginResult) = fetchAccountAndPages()
+                    override fun onCancel() = onResult(FbLoginResult.Cancelled())
+                    override fun onError(error: FacebookException) {
+                        onResult(FbLoginResult.Error(error.message ?: "Facebook login failed"))
+                    }
                 }
-            }
-        )
-        // Force web login: avoids Facebook-app SSO instant-return on devices
-        // where SSO fails, and shows dev-mode errors as a real Facebook page
-        // instead of a silent return to Settings.
-        // NOTE: use setLoginBehavior() — the loginBehavior field is private
-        // in this SDK version, so Kotlin property syntax does not compile.
-        LoginManager.getInstance().setLoginBehavior(LoginBehavior.WEB_ONLY)
-        LoginManager.getInstance().logInWithReadPermissions(activity, PERMISSIONS)
+            )
+            // Force web login: avoids Facebook-app SSO instant-return on devices
+            // where SSO fails, and shows dev-mode errors as a real Facebook page
+            // instead of a silent return to Settings.
+            // NOTE: use setLoginBehavior() — the loginBehavior field is private
+            // in this SDK version, so Kotlin property syntax does not compile.
+            LoginManager.getInstance().setLoginBehavior(LoginBehavior.WEB_ONLY)
+            LoginManager.getInstance().logInWithReadPermissions(activity, PERMISSIONS)
+        } catch (e: Exception) {
+            onResult(
+                FbLoginResult.Error(
+                    "Login start failed: ${e.message ?: e.javaClass.simpleName}"
+                )
+            )
+        }
     }
 
     fun logout() {
