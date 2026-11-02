@@ -55,7 +55,8 @@ fun SettingsLogsScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Publishing Mode Card (MOCK vs REAL Meta Graph API)
@@ -262,7 +263,9 @@ fun SettingsLogsScreen(
             // Logs Stream
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(320.dp)
             ) {
                 items(filteredLogs, key = { it.id }) { log ->
                     Card(
