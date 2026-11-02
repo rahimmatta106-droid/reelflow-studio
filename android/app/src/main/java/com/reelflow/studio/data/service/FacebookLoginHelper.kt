@@ -3,6 +3,7 @@ package com.reelflow.studio.data.service
 import android.app.Activity
 import android.os.Bundle
 import com.facebook.AccessToken
+import com.facebook.AccessTokenSource
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
@@ -10,6 +11,7 @@ import com.facebook.GraphRequest
 import com.facebook.login.LoginBehavior
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
+import java.util.Date
 
 /**
  * Facebook Login for ReelFlow Studio — the easy way to connect real pages.
@@ -92,6 +94,55 @@ class FacebookLoginHelper(
             onResult(
                 FbLoginResult.Error(
                     "Login start failed: ${e.message ?: e.javaClass.simpleName}"
+                )
+            )
+        }
+    }
+
+    /**
+     * Connect via a pasted Graph API Explorer User Token (SDK-login bypass).
+     * The token is NEVER a password: it is a Facebook-issued code that only
+     * grants page access, and it is used immediately for /me + /me/accounts.
+     * Page tokens from the response are saved exactly like the SDK flow,
+     * so the result is handled identically by the caller.
+     */
+    fun loginWithToken(userToken: String) {
+        val cleaned = userToken.trim()
+        if (cleaned.isBlank()) {
+            onResult(FbLoginResult.Error("Token khaali hai. Explorer se token copy kar ke paste karo."))
+            return
+        }
+        if (appId.isBlank() || appId == PLACEHOLDER_APP_ID) {
+            onResult(
+                FbLoginResult.Error(
+                    "Meta App ID not set yet. Finish developer verification, " +
+                        "create the ReelFlow app on developers.facebook.com, " +
+                        "then set facebook_app_id in the app."
+                )
+            )
+            return
+        }
+        try {
+            // The server validates the token string; the local userId is
+            // filled in by the /me call that follows.
+            val token = AccessToken(
+                cleaned,
+                appId,
+                "",
+                PERMISSIONS,
+                null,
+                null,
+                AccessTokenSource.FACEBOOK_APPLICATION_WEB,
+                Date(System.currentTimeMillis() + 24L * 60L * 60L * 1000L),
+                Date(),
+                null
+            )
+            AccessToken.setCurrentAccessToken(token)
+            fetchAccountAndPages()
+        } catch (e: Exception) {
+            onResult(
+                FbLoginResult.Error(
+                    "Token login failed: ${e.message ?: e.javaClass.simpleName}"
                 )
             )
         }

@@ -298,6 +298,20 @@ class ReelFlowViewModel(
         _fbLoginRequest.tryEmit(Unit)
     }
 
+    // ---------------- Token connect (SDK-login bypass) ----------------
+    private val _tokenLoginRequest = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val tokenLoginRequest: SharedFlow<String> = _tokenLoginRequest.asSharedFlow()
+
+    /** Called by the Settings "Token se Connect" button. MainActivity runs it. */
+    fun requestTokenLogin(userToken: String) {
+        if ((_connectedAccounts.value.size) >= AccountStore.MAX_ACCOUNTS) {
+            _fbLoginMessage.value = "50 accounts already connected (max)."
+            return
+        }
+        _fbLoginMessage.value = "Token se connect ho raha hai…"
+        _tokenLoginRequest.tryEmit(userToken)
+    }
+
     /** Remove an account AND its pages' tokens. */
     fun removeFacebookAccount(accountId: String) {
         val ctx = appContext ?: return

@@ -29,6 +29,8 @@ fun SettingsLogsScreen(
     val logs by viewModel.logs.collectAsState()
     val publishingMode by viewModel.publishingMode.collectAsState()
     var logSearch by remember { mutableStateOf("") }
+    var showTokenDialog by remember { mutableStateOf(false) }
+    var tokenInput by remember { mutableStateOf("") }
 
     val filteredLogs = logs.filter {
         logSearch.isEmpty() || it.message.contains(logSearch, ignoreCase = true) || it.tag.contains(logSearch, ignoreCase = true)
@@ -210,11 +212,70 @@ fun SettingsLogsScreen(
                         ) {
                             Text("+ Add Facebook Account", color = Color.White, fontSize = 13.sp)
                         }
+                        OutlinedButton(
+                            onClick = { showTokenDialog = true },
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Token se Connect", color = AccentSky, fontSize = 13.sp)
+                        }
                         if (fbMessage != null) {
                             Text(fbMessage!!, color = AccentSky, fontSize = 11.sp)
                         }
                     }
                 }
+            }
+
+            // Token-connect dialog: paste a Graph API Explorer User Token.
+            // NEVER a password — only a Facebook-issued token.
+            if (showTokenDialog) {
+                AlertDialog(
+                    onDismissRequest = { showTokenDialog = false },
+                    title = { Text("Token se Connect", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Graph API Explorer se User Token paste karo (password kabhi nahi). " +
+                                    "Is se us account ke sare pages aik saath connect ho jayenge.",
+                                color = Slate400,
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp
+                            )
+                            OutlinedTextField(
+                                value = tokenInput,
+                                onValueChange = { tokenInput = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("User Token paste karo...", fontSize = 12.sp) },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Slate900,
+                                    unfocusedContainerColor = Slate900,
+                                    focusedBorderColor = PrimaryBlue,
+                                    unfocusedBorderColor = Slate800,
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                singleLine = false,
+                                maxLines = 4
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showTokenDialog = false
+                            viewModel.requestTokenLogin(tokenInput)
+                            tokenInput = ""
+                        }) {
+                            Text("Connect", color = AccentSky, fontSize = 13.sp)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showTokenDialog = false }) {
+                            Text("Cancel", color = Slate400, fontSize = 13.sp)
+                        }
+                    },
+                    containerColor = Slate900
+                )
             }
 
             // Mock Architecture Disclosure Card

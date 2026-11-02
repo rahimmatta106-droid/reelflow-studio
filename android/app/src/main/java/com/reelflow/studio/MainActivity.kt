@@ -56,6 +56,18 @@ class MainActivity : ComponentActivity() {
                         ).login()
                     }
                 }
+                // Token-connect requests from Settings: same helper, pasted token.
+                LaunchedEffect(Unit) {
+                    viewModel.tokenLoginRequest.collect { userToken ->
+                        FacebookLoginHelper(
+                            activity = this@MainActivity,
+                            tokenStore = SecureTokenStore(applicationContext),
+                            callbackManager = callbackManager,
+                            appId = getString(R.string.facebook_app_id),
+                            onResult = { viewModel.onFacebookLoginResult(it) }
+                        ).loginWithToken(userToken)
+                    }
+                }
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
