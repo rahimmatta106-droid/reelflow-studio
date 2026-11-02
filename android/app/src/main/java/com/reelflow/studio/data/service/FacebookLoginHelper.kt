@@ -7,6 +7,7 @@ import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.GraphRequest
+import com.facebook.login.LoginBehavior
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 
@@ -76,6 +77,10 @@ class FacebookLoginHelper(
                 }
             }
         )
+        // Force web login: avoids Facebook-app SSO instant-return on devices
+        // where SSO fails, and shows dev-mode errors as a real Facebook page
+        // instead of a silent return to Settings.
+        LoginManager.getInstance().loginBehavior = LoginBehavior.WEB_ONLY
         LoginManager.getInstance().logInWithReadPermissions(activity, PERMISSIONS)
     }
 
