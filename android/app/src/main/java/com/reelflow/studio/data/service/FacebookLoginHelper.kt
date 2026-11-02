@@ -5,6 +5,7 @@ import android.os.Bundle
 import com.facebook.AccessToken
 import com.facebook.AccessTokenSource
 import com.facebook.CallbackManager
+import com.facebook.FacebookSdk
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.GraphRequest
@@ -66,6 +67,8 @@ class FacebookLoginHelper(
             )
             return
         }
+        // Defensive init here too: login must never depend on auto-init.
+        FacebookSdk.sdkInitialize(activity.applicationContext)
         // Fresh login every time: clears the previous session so a DIFFERENT
         // account can be added. Saved page tokens are NOT affected.
         // Wrapped: any launch failure (SDK init, Custom Tab, etc.) used to
@@ -123,6 +126,8 @@ class FacebookLoginHelper(
             return
         }
         try {
+            // Defensive init: Graph calls also require an initialized SDK.
+            FacebookSdk.sdkInitialize(activity.applicationContext)
             // The server validates the token string; the local userId is
             // filled in by the /me call that follows.
             val token = AccessToken(
