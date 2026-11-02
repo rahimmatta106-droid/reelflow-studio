@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import com.facebook.CallbackManager
-import com.facebook.FacebookSdk
 import com.reelflow.studio.data.service.FacebookLoginHelper
 import com.reelflow.studio.data.service.RealMetaPublishingService
 import com.reelflow.studio.data.service.SecureTokenStore
@@ -34,10 +33,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Explicit init: the SDK's auto-init provider does not run on all
-        // devices — without this, LoginManager throws "SDK has not been
-        // initialized" (seen on-device 2026-11-02). Safe to call repeatedly.
-        FacebookSdk.sdkInitialize(applicationContext)
+        // NOTE: do NOT call FacebookSdk.sdkInitialize() here. It crashed
+        // launch on-device (1.0.5 would not open at all). Init now happens
+        // lazily inside the login/token try blocks, where a failure shows
+        // as a message instead of killing the app.
         callbackManager = CallbackManager.Factory.create()
         // Attach the REAL Meta Graph API publisher (direct from device, no server).
         // Publishing stays in MOCK mode until the user flips the switch in Settings.

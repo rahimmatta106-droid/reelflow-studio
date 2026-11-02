@@ -68,7 +68,17 @@ class FacebookLoginHelper(
             return
         }
         // Defensive init here too: login must never depend on auto-init.
-        FacebookSdk.sdkInitialize(activity.applicationContext)
+        // (Inside try: an init failure must show as a message, never crash.)
+        try {
+            FacebookSdk.sdkInitialize(activity.applicationContext)
+        } catch (e: Exception) {
+            onResult(
+                FbLoginResult.Error(
+                    "SDK start failed: ${e.message ?: e.javaClass.simpleName}"
+                )
+            )
+            return
+        }
         // Fresh login every time: clears the previous session so a DIFFERENT
         // account can be added. Saved page tokens are NOT affected.
         // Wrapped: any launch failure (SDK init, Custom Tab, etc.) used to
