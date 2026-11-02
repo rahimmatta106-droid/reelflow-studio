@@ -80,7 +80,9 @@ class FacebookLoginHelper(
         // Force web login: avoids Facebook-app SSO instant-return on devices
         // where SSO fails, and shows dev-mode errors as a real Facebook page
         // instead of a silent return to Settings.
-        LoginManager.getInstance().loginBehavior = LoginBehavior.WEB_ONLY
+        // NOTE: use setLoginBehavior() — the loginBehavior field is private
+        // in this SDK version, so Kotlin property syntax does not compile.
+        LoginManager.getInstance().setLoginBehavior(LoginBehavior.WEB_ONLY)
         LoginManager.getInstance().logInWithReadPermissions(activity, PERMISSIONS)
     }
 
